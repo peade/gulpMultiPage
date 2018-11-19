@@ -1,5 +1,5 @@
 define(['jquery'], function ($) {
-  var Tool = {}
+  let Tool = {}
   Tool.test = function () {
     console.log('tool test')
   }

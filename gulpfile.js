@@ -15,6 +15,7 @@ const rev = require("gulp-rev")
 const revReplace = require("gulp-rev-replace")
 const htmlmin = require('gulp-htmlmin')
 const jsonEditor = require('gulp-json-editor')
+const babel = require('gulp-babel')
 const reload = browserSync.reload
 const proxy = proxyMiddleware('/services', {target: 'http://localhost:8080', changeOrigin: true})
 
@@ -106,4 +107,12 @@ gulp.task('revReplace', ['rev'], function () {
   return gulp.src('dist/html/**/*.html')
     .pipe(revReplace({manifest: manifest}))
     .pipe(gulp.dest('dist/html'))
+})
+
+gulp.task('babel:dev', function () {
+  return gulp.src(['src/babel/**/*.js'])
+    .pipe(sourcemaps.init())
+    .pipe(babel())
+    .pipe(sourcemaps.write())
+    .pipe(gulp.dest('src/js'))
 })
