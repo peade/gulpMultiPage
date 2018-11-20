@@ -13,6 +13,7 @@ const jsonEditor = require('gulp-json-editor')
 const babel = require('gulp-babel')
 const eslint = require('gulp-eslint')
 const sequence = require('gulp-sequence')
+const fileInclude = require('gulp-file-include')
 const reload = browserSync.reload
 const proxy = proxyMiddleware('/services', {target: 'http://localhost:8080', changeOrigin: true})
 /* scss 编译 */
@@ -21,7 +22,7 @@ gulp.task('scss:dev', function () {
     .pipe(sourcemaps.init())
     .pipe(sass({outputStyle: 'compressed'}))
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('src/css'))
+    .pipe(gulp.dest('dev/css'))
 })
 /* babel 编译 */
 gulp.task('babel:dev', function () {
@@ -29,7 +30,7 @@ gulp.task('babel:dev', function () {
     .pipe(sourcemaps.init())
     .pipe(babel())
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('src/js'))
+    .pipe(gulp.dest('dev/js'))
 })
 /* 使用 standardjs 配置.eslintrc.json, eslint检查babel文件语法*/
 gulp.task('eslint:dev', function () {
@@ -37,7 +38,6 @@ gulp.task('eslint:dev', function () {
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.result(result => {
-      console.log(1111)
       // Called for each ESLint result.
       console.log(`ESLint result: ${result.filePath}`)
       console.log(`# Messages: ${result.messages.length}`)
@@ -45,23 +45,45 @@ gulp.task('eslint:dev', function () {
       console.log(`# Errors: ${result.errorCount}`)
     }))
 })
+/* img dev */
+gulp.task('html:dev', function () {
+  return gulp.src(['src/html/**/*', '!src/html/component/**/*'])
+    .pipe(fileInclude())
+    .pipe(gulp.dest('dev/html'))
+})
+/* img dev */
+gulp.task('img:dev', function () {
+  return gulp.src(['src/images/**/*'])
+    .pipe(gulp.dest('dev/images'))
+})
+/* js lib 文件 到dev 目录 */
+gulp.task('jslib:dev', function () {
+  return gulp.src(['src/js/lib/**/*'])
+    .pipe(gulp.dest('dev/js/lib'))
+})
 /* 使用browserSync 启动本地服务，及配置请求代理转发 */
-gulp.task('dev', ['babel:dev', 'eslint:dev', 'scss:dev'], function () {
+gulp.task('dev', ['babel:dev', 'eslint:dev', 'scss:dev', 'img:dev', 'jslib:dev', 'html:dev'], function () {
   // 设置browserSync
   browserSync.init({
     server: {
-      baseDir: './src',   // http服务的目录，这是根目录
+      baseDir: './dev',   // http服务的目录，这是根目录
       middleware: [proxy],    // 使用中间件配置代理
       index: 'html/index.html'
     },
     port: 3008
   })
+  // 监听html变化
+  gulp.watch(['src/html/**/*'], ['html:dev'])
+  // 监听图片变化
+  gulp.watch(['src/images/**/*'], ['img:dev'])
+  // 监听jslib变化
+  gulp.watch(['src/js/lib/**/*'], ['jslib:dev'])
   // 监听babel文件
   gulp.watch(['src/babel/**/*'], ['babel:dev', 'eslint:dev'])
   // 监听scss文件
   gulp.watch(['src/scss/**/*.scss', '!src/scss/lib/**/*.scss'], ['scss:dev'])
   // 监听文件改动，刷新页面
-  gulp.watch(['./src/**/*', '!src/scss/**/*.scss', '!src/babel/**/*'], reload)
+  gulp.watch(['./dev/**/*', '!dev/scss/**/*.scss', '!dev/babel/**/*'], reload)
 })
 /* 执行requirejs 优化 这个地方，我没弄懂，所以暂时就这么放着 */
 gulp.task('rjs', ['clean:dist'], function () {
@@ -96,7 +118,8 @@ gulp.task('html:build', function () {
     minifyJS: true,//压缩页面JS
     minifyCSS: true//压缩页面CSS
   }
-  return gulp.src('src/html/**/*html')
+  return gulp.src(['src/html/**/*', '!src/html/component/**/*'])
+    .pipe(fileInclude())
     .pipe(htmlmin(options))
     .pipe(gulp.dest('dist/html'))
 })
