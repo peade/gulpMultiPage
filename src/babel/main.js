@@ -1,6 +1,6 @@
 require.config({
   baseUrl: '/js/',
-  urlArgs: "r=" + 'v001',
+  urlArgs: 'r=' + 'v001',
   map: {
     '*': {
       'css': 'lib/css.min'
@@ -20,4 +20,3 @@ require.config({
     }
   }
 })
-
